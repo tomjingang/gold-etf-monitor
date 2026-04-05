@@ -21,9 +21,9 @@ jobs:
         
     - name: Install dependencies
       run: |
-        pip install yfinance pandas requests
+        pip install yfinance pandas requests matplotlib
         
-    - name: Get gold prices and generate notification
+    - name: Get gold prices and generate chart
       run: |
         python3 .github/scripts/gold_price_push.py
         
@@ -33,15 +33,18 @@ jobs:
         name: gold-etf-data
         path: |
           gold_etf_*.csv
+          gold_price_*.csv
           push_notification.txt
-          email_body.txt
+          email_body.html
+          gold_trend_chart.png
+          chart_base64.txt
         retention-days: 30
         
     - name: Get current date
       id: date
-      run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+      run: echo "date=$(TZ=Asia/Shanghai date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
         
-    - name: Send email notification (Gmail)
+    - name: Send email with chart (Gmail)
       uses: dawidd6/action-send-mail@v3
       with:
         server_address: smtp.gmail.com
@@ -51,5 +54,6 @@ jobs:
         subject: 📊 黄金ETF + 伦敦金价格推送 - ${{ steps.date.outputs.date }}
         to: tanglichen_kaiser@outlook.com
         from: GitHub Actions <${{ secrets.EMAIL_USERNAME }}>
-        body: file://email_body.txt
+        html_body: file://email_body.html
+        attachments: gold_trend_chart.png
         convert_markdown: false
