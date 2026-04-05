@@ -3,6 +3,7 @@
 """
 GitHub Actions - 黄金ETF + 伦敦金价格推送
 使用Yahoo Finance API获取数据
+时间显示为北京时间 (UTC+8)
 """
 
 import yfinance as yf
@@ -24,6 +25,13 @@ GOLD_SYMBOLS = {
     'GC=F': '纽约金期货',  # COMEX黄金期货
     'XAUUSD=X': '伦敦金/美元',  # 现货黄金
 }
+
+def get_beijing_time():
+    """获取北京时间 (UTC+8)"""
+    from datetime import timezone
+    utc_now = datetime.now(timezone.utc)
+    beijing_tz = timezone(timedelta(hours=8))
+    return utc_now.astimezone(beijing_tz)
 
 def get_etf_prices():
     """获取黄金ETF价格"""
@@ -83,13 +91,13 @@ def get_gold_prices():
 def generate_push_content(etf_data, gold_data):
     """生成推送内容"""
     
-    today = datetime.now().strftime('%Y-%m-%d')
+    beijing_time = get_beijing_time()
     
     lines = []
     lines.append("=" * 60)
     lines.append("📊 黄金ETF + 伦敦金价格推送")
     lines.append("=" * 60)
-    lines.append(f"⏰ 推送时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    lines.append(f"⏰ 推送时间: {beijing_time.strftime('%Y-%m-%d %H:%M:%S')} (北京时间)")
     lines.append("📡 数据来源: Yahoo Finance")
     lines.append("=" * 60)
     lines.append("")
@@ -117,10 +125,11 @@ def generate_push_content(etf_data, gold_data):
     return "\n".join(lines)
 
 def generate_email_body(etf_data, gold_data):
-    """生成纯文本邮件内容，适配手机端"""
+    """生成纯文本邮件内容，适配手机端，使用北京时间"""
     
-    today = datetime.now().strftime('%Y-%m-%d')
-    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    beijing_time = get_beijing_time()
+    today = beijing_time.strftime('%Y-%m-%d')
+    now = beijing_time.strftime('%Y-%m-%d %H:%M:%S')
     
     # 国际金价部分
     gold_section = ""
@@ -142,7 +151,7 @@ def generate_email_body(etf_data, gold_data):
 📊 黄金ETF + 伦敦金价格推送
 ===============================================
 日期: {today}
-时间: {now}
+时间: {now} (北京时间)
 来源: Yahoo Finance
 ===============================================
 
@@ -162,7 +171,8 @@ def generate_email_body(etf_data, gold_data):
 
 def save_data(etf_data, gold_data):
     """保存数据到CSV"""
-    today = datetime.now().strftime('%Y-%m-%d')
+    beijing_time = get_beijing_time()
+    today = beijing_time.strftime('%Y-%m-%d')
     
     # 保存ETF数据
     if etf_data:
@@ -182,10 +192,12 @@ def save_data(etf_data, gold_data):
 def main():
     """主函数"""
     
+    beijing_time = get_beijing_time()
+    
     print("=" * 60)
     print("🕐 GitHub Actions - 黄金ETF + 伦敦金价格推送")
     print("=" * 60)
-    print(f"⏰ 执行时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"⏰ 执行时间: {beijing_time.strftime('%Y-%m-%d %H:%M:%S')} (北京时间)")
     print("📡 数据来源: Yahoo Finance")
     print("=" * 60)
     print()
