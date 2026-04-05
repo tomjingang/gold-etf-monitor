@@ -38,6 +38,7 @@ jobs:
         retention-days: 30
         
     - name: Send email notification
+      if: ${{ secrets.EMAIL_USERNAME != '' && secrets.EMAIL_PASSWORD != '' }}
       uses: dawidd6/action-send-mail@v3
       with:
         server_address: smtp.gmail.com
