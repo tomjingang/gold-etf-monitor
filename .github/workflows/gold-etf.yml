@@ -1,0 +1,41 @@
+name: 黄金ETF + 伦敦金价格推送
+
+on:
+  schedule:
+    # 每天北京时间9:30 (UTC 1:30)
+    - cron: '30 1 * * *'
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  push-gold-price:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: Install dependencies
+      run: |
+        pip install yfinance pandas requests
+        
+    - name: Get gold prices and push
+      env:
+        # 可选：配置推送方式（微信、钉钉、邮件等）
+        # WECHAT_KEY: ${{ secrets.WECHAT_KEY }}
+        # DINGTALK_TOKEN: ${{ secrets.DINGTALK_TOKEN }}
+        # EMAIL_TO: ${{ secrets.EMAIL_TO }}
+      run: |
+        python3 .github/scripts/gold_price_push.py
+        
+    - name: Upload results
+      uses: actions/upload-artifact@v3
+      with:
+        name: gold-etf-data
+        path: |
+          gold_etf_*.csv
+          push_notification.txt
