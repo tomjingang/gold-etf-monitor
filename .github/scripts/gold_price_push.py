@@ -12,22 +12,19 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from datetime import datetime, timedelta
 import os
-import json
-import base64
-from io import BytesIO
 
 # 黄金ETF代码 (Yahoo Finance格式)
 ETF_CODES = {
-    '518880.SS': '华安黄金ETF',  # 上交所
-    '159934.SZ': '易方达黄金ETF',  # 深交所
+    '518880.SS': '华安黄金ETF',
+    '159934.SZ': '易方达黄金ETF',
     '518800.SS': '国泰黄金ETF',
     '159937.SZ': '博时黄金ETF',
 }
 
 # 伦敦金代码
 GOLD_SYMBOLS = {
-    'GC=F': '纽约金期货',  # COMEX黄金期货
-    'XAUUSD=X': '伦敦金/美元',  # 现货黄金
+    'GC=F': '纽约金期货',
+    'XAUUSD=X': '伦敦金/美元',
 }
 
 def get_beijing_time():
@@ -95,7 +92,6 @@ def get_gold_prices():
 def get_historical_data(days=45):
     """获取过去N天的历史数据用于绘图"""
     
-    # 获取伦敦金历史数据
     gold_hist = {}
     for symbol, name in GOLD_SYMBOLS.items():
         try:
@@ -106,9 +102,8 @@ def get_historical_data(days=45):
         except Exception as e:
             print(f"获取 {name} 历史数据失败: {e}")
     
-    # 获取ETF历史数据（以华安黄金ETF为代表）
     etf_hist = {}
-    for code, name in list(ETF_CODES.items())[:1]:  # 只取第一个作为代表
+    for code, name in list(ETF_CODES.items())[:1]:
         try:
             ticker = yf.Ticker(code)
             hist = ticker.history(period=f"{days}d")
@@ -124,7 +119,6 @@ def create_trend_chart(gold_hist, etf_hist, days=45):
     
     beijing_time = get_beijing_time()
     
-    # 创建图表
     fig, axes = plt.subplots(2, 1, figsize=(12, 10))
     fig.suptitle(f'Gold ETF + London Gold Price Trend (Past {days} Days)\nBeijing Time: {beijing_time.strftime("%Y-%m-%d %H:%M")}', 
                  fontsize=16, fontweight='bold')
@@ -132,7 +126,6 @@ def create_trend_chart(gold_hist, etf_hist, days=45):
     # 子图1: 国际金价
     ax1 = axes[0]
     for name, hist in gold_hist.items():
-        # 使用英文名称
         label = 'Gold Futures' if '期货' in name or 'Futures' in name else 'London Gold'
         ax1.plot(hist.index, hist['Close'], linewidth=2, label=label, marker='o', markersize=3)
     
@@ -148,8 +141,7 @@ def create_trend_chart(gold_hist, etf_hist, days=45):
     # 子图2: 黄金ETF
     ax2 = axes[1]
     for name, hist in etf_hist.items():
-        label = 'Gold ETF'
-        ax2.plot(hist.index, hist['Close'], linewidth=2, label=label, color='#667eea', marker='o', markersize=3)
+        ax2.plot(hist.index, hist['Close'], linewidth=2, label='Gold ETF', color='#667eea', marker='o', markersize=3)
     
     ax2.set_title('Gold ETF Trend', fontsize=14, fontweight='bold', pad=10)
     ax2.set_xlabel('Date', fontsize=12)
@@ -162,7 +154,6 @@ def create_trend_chart(gold_hist, etf_hist, days=45):
     
     plt.tight_layout()
     
-    # 保存图片
     chart_path = 'gold_trend_chart.png'
     plt.savefig(chart_path, dpi=150, bbox_inches='tight', facecolor='white')
     plt.close()
@@ -184,7 +175,6 @@ def generate_push_content(etf_data, gold_data):
     lines.append("=" * 60)
     lines.append("")
     
-    # 国际金价
     lines.append("🌍 国际金价:")
     for name, data in gold_data.items():
         emoji = "📈" if data['change'] >= 0 else "📉"
@@ -192,7 +182,6 @@ def generate_push_content(etf_data, gold_data):
         lines.append(f"      涨跌: {data['change']:+.2f} ({data['change_pct']:+.2f}%)")
     lines.append("")
     
-    # 黄金ETF
     lines.append("📈 黄金ETF:")
     for etf in etf_data:
         emoji = "📈" if etf['change'] >= 0 else "📉"
@@ -213,7 +202,6 @@ def generate_email_body(etf_data, gold_data):
     today = beijing_time.strftime('%Y-%m-%d')
     now = beijing_time.strftime('%Y-%m-%d %H:%M:%S')
     
-    # 国际金价部分
     gold_section = ""
     for name, data in gold_data.items():
         trend = "↑" if data['change'] >= 0 else "↓"
@@ -221,7 +209,6 @@ def generate_email_body(etf_data, gold_data):
         gold_section += f"&nbsp;&nbsp;&nbsp;价格: ${data['price']:.2f}<br>"
         gold_section += f"&nbsp;&nbsp;&nbsp;涨跌: {data['change']:+.2f} ({data['change_pct']:+.2f}%)<br><br>"
     
-    # ETF部分
     etf_section = ""
     for etf in etf_data:
         trend = "↑" if etf['change'] >= 0 else "↓"
@@ -238,32 +225,24 @@ def generate_email_body(etf_data, gold_data):
 </head>
 <body style="margin:0;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:#f5f5f5;">
     <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:white;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
-        <!-- 头部 -->
         <tr>
             <td style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:30px;text-align:center;border-radius:10px 10px 0 0;">
                 <h1 style="margin:0;color:white;font-size:24px;">📊 黄金ETF + 伦敦金价格推送</h1>
                 <p style="margin:10px 0 0 0;color:white;opacity:0.9;font-size:14px;">{now} (北京时间)</p>
             </td>
         </tr>
-        
-        <!-- 内容 -->
         <tr>
             <td style="padding:30px;">
-                <!-- 国际金价 -->
                 <h2 style="margin:0 0 15px 0;color:#333;font-size:18px;border-left:4px solid #667eea;padding-left:10px;">🌍 国际金价</h2>
                 <div style="background:#f8f9fa;padding:15px;border-radius:8px;margin-bottom:20px;line-height:1.8;">
                     {gold_section}
                 </div>
-                
-                <!-- 黄金ETF -->
                 <h2 style="margin:0 0 15px 0;color:#333;font-size:18px;border-left:4px solid #667eea;padding-left:10px;">📈 黄金ETF</h2>
                 <div style="background:#f8f9fa;padding:15px;border-radius:8px;line-height:1.8;">
                     {etf_section}
                 </div>
             </td>
         </tr>
-        
-        <!-- 底部 -->
         <tr>
             <td style="background:#f8f9fa;padding:20px;text-align:center;border-radius:0 0 10px 10px;">
                 <p style="margin:0;color:#28a745;font-size:16px;font-weight:bold;">✅ 推送完成</p>
@@ -282,13 +261,11 @@ def save_data(etf_data, gold_data):
     beijing_time = get_beijing_time()
     today = beijing_time.strftime('%Y-%m-%d')
     
-    # 保存ETF数据
     if etf_data:
         df = pd.DataFrame(etf_data)
         df.to_csv(f'gold_etf_{today}.csv', index=False)
         print(f"✅ ETF数据已保存: gold_etf_{today}.csv")
     
-    # 保存金价数据
     if gold_data:
         gold_df = pd.DataFrame([
             {'name': k, 'price': v['price'], 'change': v['change'], 'change_pct': v['change_pct']}
@@ -335,47 +312,11 @@ def main():
         f.write(push_content)
     print("\n✅ 推送内容已保存: push_notification.txt")
     
-    # 生成HTML邮件内容（不包含图片）
+    # 生成HTML邮件内容
     email_html = generate_email_body(etf_data, gold_data)
     with open('email_body.html', 'w', encoding='utf-8') as f:
         f.write(email_html)
     print("✅ 邮件内容已保存: email_body.html")
-    
-    # 保存数据
-    save_data(etf_data, gold_data)
-
-if __name__ == "__main__":
-    main()
-ase64")
-    
-    # 获取最新数据
-    print("\n🔄 正在获取最新黄金ETF价格...")
-    etf_data = get_etf_prices()
-    
-    print("🔄 正在获取最新国际金价...")
-    gold_data = get_gold_prices()
-    
-    # 生成推送内容
-    push_content = generate_push_content(etf_data, gold_data)
-    
-    # 打印推送内容
-    print("\n" + push_content)
-    
-    # 保存推送内容
-    with open('push_notification.txt', 'w', encoding='utf-8') as f:
-        f.write(push_content)
-    print("\n✅ 推送内容已保存: push_notification.txt")
-    
-    # 生成HTML邮件内容（包含图片）
-    email_html = generate_email_body(etf_data, gold_data, chart_base64)
-    with open('email_body.html', 'w', encoding='utf-8') as f:
-        f.write(email_html)
-    print("✅ 邮件内容已保存: email_body.html (包含趋势图)")
-    
-    # 同时保存base64图片数据供工作流使用
-    with open('chart_base64.txt', 'w', encoding='utf-8') as f:
-        f.write(chart_base64)
-    print("✅ 图片base64已保存: chart_base64.txt")
     
     # 保存数据
     save_data(etf_data, gold_data)
