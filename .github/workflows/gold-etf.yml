@@ -12,30 +12,26 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: '3.11'
         
     - name: Install dependencies
       run: |
         pip install yfinance pandas requests
         
     - name: Get gold prices and push
-      env:
-        # 可选：配置推送方式（微信、钉钉、邮件等）
-        # WECHAT_KEY: ${{ secrets.WECHAT_KEY }}
-        # DINGTALK_TOKEN: ${{ secrets.DINGTALK_TOKEN }}
-        # EMAIL_TO: ${{ secrets.EMAIL_TO }}
       run: |
         python3 .github/scripts/gold_price_push.py
         
     - name: Upload results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: gold-etf-data
         path: |
           gold_etf_*.csv
           push_notification.txt
+        retention-days: 30
