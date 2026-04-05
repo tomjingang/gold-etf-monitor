@@ -37,10 +37,10 @@ jobs:
           email_body.html
         retention-days: 30
         
-    - name: Send email notification (Outlook)
+    - name: Send email notification (Gmail)
       uses: dawidd6/action-send-mail@v3
       with:
-        server_address: smtp.office365.com
+        server_address: smtp.gmail.com
         server_port: 587
         username: ${{ secrets.EMAIL_USERNAME }}
         password: ${{ secrets.EMAIL_PASSWORD }}
