@@ -116,6 +116,112 @@ def generate_push_content(etf_data, gold_data):
     
     return "\n".join(lines)
 
+def generate_email_html(etf_data, gold_data):
+    """生成HTML邮件内容"""
+    
+    today = datetime.now().strftime('%Y-%m-%d')
+    
+    # 生成国际金价HTML
+    gold_html = ""
+    for name, data in gold_data.items():
+        color = "#28a745" if data['change'] >= 0 else "#dc3545"
+        emoji = "📈" if data['change'] >= 0 else "📉"
+        gold_html += f"""
+        <tr>
+            <td style="padding: 10px; border-bottom: 1px solid #eee;">{emoji} {name}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">${data['price']:.2f}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; color: {color};">{data['change']:+.2f} ({data['change_pct']:+.2f}%)</td>
+        </tr>
+        """
+    
+    # 生成ETF HTML
+    etf_html = ""
+    for etf in etf_data:
+        color = "#28a745" if etf['change'] >= 0 else "#dc3545"
+        emoji = "📈" if etf['change'] >= 0 else "📉"
+        etf_html += f"""
+        <tr>
+            <td style="padding: 10px; border-bottom: 1px solid #eee;">{emoji} {etf['name']}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">¥{etf['price']:.3f}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; color: {color};">{etf['change']:+.3f} ({etf['change_pct']:+.2f}%)</td>
+        </tr>
+        """
+    
+    html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>黄金ETF + 伦敦金价格推送</title>
+    <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background: #f5f5f5; }}
+        .container {{ background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden; }}
+        .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; }}
+        .header h1 {{ margin: 0; font-size: 24px; }}
+        .header p {{ margin: 10px 0 0 0; opacity: 0.9; }}
+        .content {{ padding: 30px; }}
+        .section {{ margin-bottom: 30px; }}
+        .section-title {{ font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #667eea; border-left: 4px solid #667eea; padding-left: 10px; }}
+        table {{ width: 100%; border-collapse: collapse; }}
+        th {{ background: #f8f9fa; padding: 12px; text-align: left; font-weight: 600; color: #555; }}
+        td {{ padding: 12px; border-bottom: 1px solid #eee; }}
+        .footer {{ background: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 12px; }}
+        .footer a {{ color: #667eea; text-decoration: none; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 黄金ETF + 伦敦金价格推送</h1>
+            <p>推送时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+            <p>数据来源: Yahoo Finance</p>
+        </div>
+        
+        <div class="content">
+            <div class="section">
+                <div class="section-title">🌍 国际金价</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>名称</th>
+                            <th>价格</th>
+                            <th>涨跌</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {gold_html}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">📈 黄金ETF</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>名称</th>
+                            <th>价格</th>
+                            <th>涨跌</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {etf_html}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>✅ 推送完成</p>
+            <p>本邮件由 GitHub Actions 自动发送</p>
+            <p><a href="https://github.com/tomjingang/gold-etf-monitor">查看仓库</a></p>
+        </div>
+    </div>
+</body>
+</html>"""
+    
+    return html
+
 def save_data(etf_data, gold_data):
     """保存数据到CSV"""
     today = datetime.now().strftime('%Y-%m-%d')
@@ -164,11 +270,14 @@ def main():
         f.write(push_content)
     print("\n✅ 推送内容已保存: push_notification.txt")
     
+    # 生成并保存HTML邮件
+    email_html = generate_email_html(etf_data, gold_data)
+    with open('email_body.html', 'w', encoding='utf-8') as f:
+        f.write(email_html)
+    print("✅ 邮件内容已保存: email_body.html")
+    
     # 保存数据
     save_data(etf_data, gold_data)
-    
-    # 可选：发送推送通知（微信、钉钉等）
-    # send_notifications(push_content)
 
 if __name__ == "__main__":
     main()
