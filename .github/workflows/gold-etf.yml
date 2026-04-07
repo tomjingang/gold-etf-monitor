@@ -9,24 +9,24 @@ on:
 jobs:
   push-gold-price:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-        
+
     - name: Install dependencies
       run: |
         pip install yfinance pandas requests matplotlib
-        
+
     - name: Get gold prices and generate chart
       run: |
         python3 .github/scripts/gold_price_push.py
-        
+
     - name: Upload results
       uses: actions/upload-artifact@v4
       with:
@@ -39,19 +39,19 @@ jobs:
           gold_trend_chart.png
           chart_base64.txt
         retention-days: 30
-        
+
     - name: Get current date
       id: date
       run: echo "date=$(TZ=Asia/Shanghai date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
-        
+
     - name: Send email with chart (Gmail)
-      uses: dawidd6/action-send-mail@v3
+      uses: dawidd6/action-send-mail@v4
       with:
         server_address: smtp.gmail.com
         server_port: 587
         username: ${{ secrets.EMAIL_USERNAME }}
         password: ${{ secrets.EMAIL_PASSWORD }}
-        subject: 📊 黄金ETF + 伦敦金价格推送 - ${{ steps.date.outputs.date }}
+        subject: 黄金ETF + 伦敦金价格推送 - ${{ steps.date.outputs.date }}
         to: tanglichen_kaiser@outlook.com
         from: GitHub Actions <${{ secrets.EMAIL_USERNAME }}>
         html_body: file://email_body.html
