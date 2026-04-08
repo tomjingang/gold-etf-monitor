@@ -13,11 +13,14 @@ GitHub Actions - 黄金/原油投资推送系统
 
 import yfinance as yf
 import pandas as pd
+import matplotlib
+matplotlib.use('Agg')  # 非交互式后端，适用于GitHub Actions
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from datetime import datetime, timedelta
 import os
 import json
+import time
 
 # ============ 数据配置 ============
 # 黄金相关
@@ -53,17 +56,21 @@ def get_beijing_time():
     return utc_now.astimezone(beijing_tz)
 
 
-def fetch_data(symbol, period='90d'):
-    """获取指定品种的完整数据"""
-    try:
-        ticker = yf.Ticker(symbol)
-        hist = ticker.history(period=period)
-        if len(hist) == 0:
-            return None
-        return calculate_indicators(hist)
-    except Exception as e:
-        print(f"获取 {symbol} 数据失败: {e}")
-        return None
+def fetch_data(symbol, period='90d', max_retries=3):
+    """获取指定品种的完整数据，带重试机制"""
+    for attempt in range(max_retries):
+        try:
+            ticker = yf.Ticker(symbol)
+            hist = ticker.history(period=period)
+            if len(hist) == 0:
+                return None
+            return calculate_indicators(hist)
+        except Exception as e:
+            print(f"获取 {symbol} 数据失败 (尝试 {attempt+1}/{max_retries}): {e}")
+            if attempt < max_retries - 1:
+                time.sleep(2)  # 等待2秒后重试
+            else:
+                return None
 
 
 def calculate_indicators(df):
