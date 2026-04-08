@@ -1,4 +1,4 @@
-name: 黄金ETF + 伦敦金价格推送
+name: 黄金/原油市场推送 + 智能投资建议
 
 on:
   schedule:
@@ -9,41 +9,41 @@ on:
 jobs:
   push-gold-price:
     runs-on: ubuntu-latest
-
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
+      
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-
+        
     - name: Install dependencies
       run: |
-        pip install yfinance pandas requests matplotlib
-
-    - name: Get gold prices and generate chart
+        pip install yfinance pandas requests matplotlib numpy
+        
+    - name: Get market data and generate advice
       run: |
         python3 .github/scripts/gold_price_push.py
-
+        
     - name: Upload results
       uses: actions/upload-artifact@v4
       with:
-        name: gold-etf-data
+        name: market-data
         path: |
-          gold_etf_*.csv
-          gold_price_*.csv
           push_notification.txt
           email_body.html
-          gold_trend_chart.png
-          chart_base64.txt
+          market_trend_chart.png
+          price_data_*.json
+          advice_history.json
+          backtest_history.json
         retention-days: 30
-
+        
     - name: Get current date
       id: date
       run: echo "date=$(TZ=Asia/Shanghai date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
-
+        
     - name: Send email with chart (Gmail)
       uses: dawidd6/action-send-mail@v4
       with:
@@ -51,9 +51,9 @@ jobs:
         server_port: 587
         username: ${{ secrets.EMAIL_USERNAME }}
         password: ${{ secrets.EMAIL_PASSWORD }}
-        subject: 黄金ETF + 伦敦金价格推送 - ${{ steps.date.outputs.date }}
+        subject: 黄金/原油市场推送 - ${{ steps.date.outputs.date }}
         to: tanglichen_kaiser@outlook.com
         from: GitHub Actions <${{ secrets.EMAIL_USERNAME }}>
         html_body: file://email_body.html
-        attachments: gold_trend_chart.png
+        attachments: market_trend_chart.png
         convert_markdown: false
