@@ -499,67 +499,107 @@ def generate_push_content(gold_data, oil_data, advice, backtest):
 
 
 def generate_email_html(gold_data, oil_data, advice, backtest):
-    """生成邮件HTML"""
+    """生成适配手机APP的邮件HTML - 使用简单表格布局"""
     beijing_time = get_beijing_time()
     
-    action_color = {'buy': '#28a745', 'sell': '#dc3545', 'hold': '#ffc107', 'reduce': '#fd7e14'}
+    action_color = {'buy': '#28a745', 'sell': '#dc3545', 'hold': '#ff9800', 'reduce': '#fd7e14'}
     action_text = {'buy': '买入', 'sell': '卖出', 'hold': '持有', 'reduce': '减仓'}
     
-    # 市场数据部分
-    market_html = ""
+    # 构建价格数据HTML - 使用简单表格
+    prices_html = ""
     
+    # 纽约金
     if gold_data['ny_gold']:
         ny = gold_data['ny_gold']
         color = '#28a745' if ny['change'] >= 0 else '#dc3545'
-        market_html += f"""
-        <div style="background:#fff8e1;padding:12px;border-radius:8px;margin-bottom:10px;">
-            <strong>🥇 纽约金期货</strong><br>
-            <span style="color:{color};font-size:18px;font-weight:bold;">${ny['price']:.2f}</span> 
-            <span style="color:{color};">({ny['change_pct']:+.2f}%)</span><br>
-            <small>RSI: {ny['rsi']:.1f} | MA20: ${ny['ma20']:.2f} | 波动率: {ny['volatility']:.2f}%</small>
-        </div>"""
+        arrow = '▲' if ny['change'] >= 0 else '▼'
+        prices_html += f"""
+        <tr>
+            <td style="padding:12px 15px;border-bottom:1px solid #eee;background:#fffbf0;">
+                <div style="font-size:16px;font-weight:bold;color:#333;">🥇 纽约金期货</div>
+                <div style="font-size:20px;font-weight:bold;color:{color};margin-top:5px;">
+                    {arrow} ${ny['price']:.2f} <span style="font-size:14px;">({ny['change_pct']:+.2f}%)</span>
+                </div>
+                <div style="font-size:12px;color:#666;margin-top:5px;">
+                    RSI:{ny['rsi']:.0f} | MA20:${ny['ma20']:.0f} | 波动:{ny['volatility']:.1f}%
+                </div>
+            </td>
+        </tr>"""
     
+    # 伦敦金/GLD
     if gold_data['london_gold']:
         lg = gold_data['london_gold']
         color = '#28a745' if lg['change'] >= 0 else '#dc3545'
-        market_html += f"""
-        <div style="background:#fff8e1;padding:12px;border-radius:8px;margin-bottom:10px;">
-            <strong>💰 伦敦金</strong><br>
-            <span style="color:{color};font-size:18px;font-weight:bold;">${lg['price']:.2f}</span> 
-            <span style="color:{color};">({lg['change_pct']:+.2f}%)</span>
-        </div>"""
+        arrow = '▲' if lg['change'] >= 0 else '▼'
+        prices_html += f"""
+        <tr>
+            <td style="padding:12px 15px;border-bottom:1px solid #eee;background:#fffbf0;">
+                <div style="font-size:16px;font-weight:bold;color:#333;">💰 {lg['name']}</div>
+                <div style="font-size:20px;font-weight:bold;color:{color};margin-top:5px;">
+                    {arrow} ${lg['price']:.2f} <span style="font-size:14px;">({lg['change_pct']:+.2f}%)</span>
+                </div>
+            </td>
+        </tr>"""
     
+    # 中国黄金ETF
     if gold_data['china_etf']:
-        market_html += '<div style="margin:15px 0;"><strong>📈 中国黄金ETF</strong></div>'
+        prices_html += """
+        <tr>
+            <td style="padding:12px 15px;border-bottom:1px solid #eee;background:#f9f9f9;">
+                <div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:8px;">📈 中国黄金ETF</div>
+                <table width="100%" cellpadding="0" cellspacing="0">"""
         for etf in gold_data['china_etf']:
             color = '#28a745' if etf['change'] >= 0 else '#dc3545'
-            market_html += f"""
-            <div style="background:#f5f5f5;padding:8px 12px;border-radius:5px;margin-bottom:5px;">
-                {etf['name']}: <span style="color:{color};font-weight:bold;">¥{etf['price']:.3f} ({etf['change_pct']:+.2f}%)</span>
-            </div>"""
+            arrow = '▲' if etf['change'] >= 0 else '▼'
+            prices_html += f"""
+                    <tr>
+                        <td style="padding:6px 0;font-size:14px;color:#333;">{etf['name']}</td>
+                        <td style="padding:6px 0;text-align:right;font-size:16px;font-weight:bold;color:{color};">
+                            {arrow} ¥{etf['price']:.3f}
+                        </td>
+                        <td style="padding:6px 0;text-align:right;font-size:13px;color:{color};">
+                            ({etf['change_pct']:+.2f}%)
+                        </td>
+                    </tr>"""
+        prices_html += """
+                </table>
+            </td>
+        </tr>"""
     
+    # WTI原油
     if oil_data['wti']:
         wti = oil_data['wti']
         color = '#28a745' if wti['change'] >= 0 else '#dc3545'
-        market_html += f"""
-        <div style="background:#e3f2fd;padding:12px;border-radius:8px;margin:15px 0 10px 0;">
-            <strong>🛢️ WTI原油</strong><br>
-            <span style="color:{color};font-size:18px;font-weight:bold;">${wti['price']:.2f}</span> 
-            <span style="color:{color};">({wti['change_pct']:+.2f}%)</span><br>
-            <small>RSI: {wti['rsi']:.1f} | MA20: ${wti['ma20']:.2f} | 波动率: {wti['volatility']:.2f}%</small>
-        </div>"""
+        arrow = '▲' if wti['change'] >= 0 else '▼'
+        prices_html += f"""
+        <tr>
+            <td style="padding:12px 15px;border-bottom:1px solid #eee;background:#e3f2fd;">
+                <div style="font-size:16px;font-weight:bold;color:#333;">🛢️ WTI原油</div>
+                <div style="font-size:20px;font-weight:bold;color:{color};margin-top:5px;">
+                    {arrow} ${wti['price']:.2f} <span style="font-size:14px;">({wti['change_pct']:+.2f}%)</span>
+                </div>
+                <div style="font-size:12px;color:#666;margin-top:5px;">
+                    RSI:{wti['rsi']:.0f} | MA20:${wti['ma20']:.0f} | 波动:{wti['volatility']:.1f}%
+                </div>
+            </td>
+        </tr>"""
     
+    # 布伦特原油
     if oil_data['brent']:
         brent = oil_data['brent']
         color = '#28a745' if brent['change'] >= 0 else '#dc3545'
-        market_html += f"""
-        <div style="background:#e3f2fd;padding:12px;border-radius:8px;margin-bottom:10px;">
-            <strong>🛢️ 布伦特原油</strong><br>
-            <span style="color:{color};font-size:18px;font-weight:bold;">${brent['price']:.2f}</span> 
-            <span style="color:{color};">({brent['change_pct']:+.2f}%)</span>
-        </div>"""
+        arrow = '▲' if brent['change'] >= 0 else '▼'
+        prices_html += f"""
+        <tr>
+            <td style="padding:12px 15px;border-bottom:1px solid #eee;background:#e3f2fd;">
+                <div style="font-size:16px;font-weight:bold;color:#333;">🛢️ 布伦特原油</div>
+                <div style="font-size:20px;font-weight:bold;color:{color};margin-top:5px;">
+                    {arrow} ${brent['price']:.2f} <span style="font-size:14px;">({brent['change_pct']:+.2f}%)</span>
+                </div>
+            </td>
+        </tr>"""
     
-    # 投资建议部分
+    # 投资建议
     gold = advice['gold']
     oil = advice['oil']
     portfolio = advice['portfolio']
@@ -567,103 +607,139 @@ def generate_email_html(gold_data, oil_data, advice, backtest):
     gold_color = action_color.get(gold['action'], '#6c757d')
     oil_color = action_color.get(oil['action'], '#6c757d')
     
+    # 黄金建议
+    gold_reasons = '; '.join(gold.get('reasons', ['趋势不明确']))
+    gold_target = f"<div style='font-size:13px;color:#28a745;margin-top:5px;'>目标: ${gold['target']:.2f}</div>" if gold.get('target') else ""
+    gold_stop = f"<div style='font-size:13px;color:#dc3545;margin-top:3px;'>止损: ${gold['stop_loss']:.2f}</div>" if gold.get('stop_loss') else ""
+    
+    # 原油建议
+    oil_reasons = '; '.join(oil.get('reasons', ['趋势不明确']))
+    oil_target = f"<div style='font-size:13px;color:#28a745;margin-top:5px;'>目标: ${oil['target']:.2f}</div>" if oil.get('target') else ""
+    oil_stop = f"<div style='font-size:13px;color:#dc3545;margin-top:3px;'>止损: ${oil['stop_loss']:.2f}</div>" if oil.get('stop_loss') else ""
+    
     advice_html = f"""
-    <div style="margin:20px 0;">
-        <h2 style="color:#333;border-left:4px solid #667eea;padding-left:10px;">💡 智能投资建议</h2>
-        <div style="display:flex;flex-wrap:wrap;gap:15px;margin-top:15px;">
-            <div style="flex:1;min-width:250px;background:{gold_color}15;padding:15px;border-radius:8px;border-left:4px solid {gold_color};">
-                <h3 style="margin:0 0 10px 0;color:{gold_color};">🥇 黄金 - {action_text.get(gold['action'], '观望')}</h3>
-                <p style="margin:5px 0;">置信度: <strong>{gold['confidence']}%</strong></p>
-                <p style="margin:5px 0;">建议仓位: <strong>{gold['allocation_pct']}%</strong></p>
-                {f'<p style="margin:5px 0;">目标价: ${gold["target"]:.2f}</p>' if gold.get('target') else ''}
-                {f'<p style="margin:5px 0;">止损价: ${gold["stop_loss"]:.2f}</p>' if gold.get('stop_loss') else ''}
-                <p style="margin:5px 0;font-size:12px;color:#666;">{'; '.join(gold['reasons'])}</p>
-            </div>
-            <div style="flex:1;min-width:250px;background:{oil_color}15;padding:15px;border-radius:8px;border-left:4px solid {oil_color};">
-                <h3 style="margin:0 0 10px 0;color:{oil_color};">🛢️ 原油 - {action_text.get(oil['action'], '观望')}</h3>
-                <p style="margin:5px 0;">置信度: <strong>{oil['confidence']}%</strong></p>
-                <p style="margin:5px 0;">建议仓位: <strong>{oil['allocation_pct']}%</strong></p>
-                {f'<p style="margin:5px 0;">目标价: ${oil["target"]:.2f}</p>' if oil.get('target') else ''}
-                {f'<p style="margin:5px 0;">止损价: ${oil["stop_loss"]:.2f}</p>' if oil.get('stop_loss') else ''}
-                <p style="margin:5px 0;font-size:12px;color:#666;">{'; '.join(oil['reasons'])}</p>
-            </div>
-        </div>
-    </div>
-    """
+    <tr>
+        <td style="padding:15px;background:#f8f9fa;">
+            <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:12px;border-left:4px solid #667eea;padding-left:10px;">💡 智能投资建议</div>
+            
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
+                <tr>
+                    <td style="padding:12px;background:{gold_color}15;border-left:4px solid {gold_color};border-radius:4px;">
+                        <div style="font-size:15px;font-weight:bold;color:{gold_color};margin-bottom:8px;">🥇 黄金 - {action_text.get(gold['action'], '观望')}</div>
+                        <div style="font-size:14px;color:#333;">置信度: <strong>{gold['confidence']}%</strong> | 仓位: <strong>{gold['allocation_pct']}%</strong></div>
+                        {gold_target}
+                        {gold_stop}
+                        <div style="font-size:12px;color:#666;margin-top:8px;line-height:1.5;">{gold_reasons}</div>
+                    </td>
+                </tr>
+            </table>
+            
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td style="padding:12px;background:{oil_color}15;border-left:4px solid {oil_color};border-radius:4px;">
+                        <div style="font-size:15px;font-weight:bold;color:{oil_color};margin-bottom:8px;">🛢️ 原油 - {action_text.get(oil['action'], '观望')}</div>
+                        <div style="font-size:14px;color:#333;">置信度: <strong>{oil['confidence']}%</strong> | 仓位: <strong>{oil['allocation_pct']}%</strong></div>
+                        {oil_target}
+                        {oil_stop}
+                        <div style="font-size:12px;color:#666;margin-top:8px;line-height:1.5;">{oil_reasons}</div>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>"""
     
     # 资产配置
     allocation_html = f"""
-    <div style="background:#f5f5f5;padding:15px;border-radius:8px;margin:15px 0;">
-        <h3 style="margin:0 0 15px 0;">📊 推荐资产配置</h3>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <div style="flex:1;min-width:80px;text-align:center;background:#FFD700;padding:15px;border-radius:5px;">
-                <div style="font-size:28px;font-weight:bold;">{portfolio['gold_pct']}%</div>
-                <div style="font-size:12px;">黄金</div>
-            </div>
-            <div style="flex:1;min-width:80px;text-align:center;background:#2196F3;padding:15px;border-radius:5px;color:white;">
-                <div style="font-size:28px;font-weight:bold;">{portfolio['oil_pct']}%</div>
-                <div style="font-size:12px;">原油</div>
-            </div>
-            <div style="flex:1;min-width:80px;text-align:center;background:#4CAF50;padding:15px;border-radius:5px;color:white;">
-                <div style="font-size:28px;font-weight:bold;">{portfolio['cash_pct']}%</div>
-                <div style="font-size:12px;">现金</div>
-            </div>
-        </div>
-    </div>
-    """
+    <tr>
+        <td style="padding:15px;background:#fff;">
+            <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:12px;">📊 推荐资产配置</div>
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td style="width:33%;padding:12px 5px;text-align:center;background:#FFD700;border-radius:4px;">
+                        <div style="font-size:24px;font-weight:bold;color:#333;">{portfolio['gold_pct']}%</div>
+                        <div style="font-size:12px;color:#333;">黄金</div>
+                    </td>
+                    <td style="width:5px;"></td>
+                    <td style="width:33%;padding:12px 5px;text-align:center;background:#2196F3;border-radius:4px;">
+                        <div style="font-size:24px;font-weight:bold;color:#fff;">{portfolio['oil_pct']}%</div>
+                        <div style="font-size:12px;color:#fff;">原油</div>
+                    </td>
+                    <td style="width:5px;"></td>
+                    <td style="width:33%;padding:12px 5px;text-align:center;background:#4CAF50;border-radius:4px;">
+                        <div style="font-size:24px;font-weight:bold;color:#fff;">{portfolio['cash_pct']}%</div>
+                        <div style="font-size:12px;color:#fff;">现金</div>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>"""
     
     # 回测结果
     backtest_html = ""
     if backtest:
         backtest_html = f"""
-        <div style="background:#e8f5e9;padding:15px;border-radius:8px;margin:15px 0;">
-            <h3 style="margin:0 0 10px 0;">📈 策略回测 (近30天)</h3>
-            <p style="margin:5px 0;">累计收益: <strong>{backtest.get('gold_return', 0):.2f}%</strong></p>
-            <p style="margin:5px 0;">胜率: <strong>{backtest.get('win_rate', 0):.1f}%</strong> ({backtest.get('profitable_trades', 0)}/{backtest.get('total_trades', 0)})</p>
-            {f'<p style="margin:5px 0;">平均单次收益: {backtest["avg_return"]:.2f}%</p>' if 'avg_return' in backtest else ''}
-        </div>
-        """
+    <tr>
+        <td style="padding:15px;background:#e8f5e9;">
+            <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:10px;">📈 策略回测 (近30天)</div>
+            <div style="font-size:14px;color:#333;line-height:1.8;">
+                <div>累计收益: <strong style="color:#28a745;">{backtest.get('gold_return', 0):.2f}%</strong></div>
+                <div>胜率: <strong>{backtest.get('win_rate', 0):.1f}%</strong> ({backtest.get('profitable_trades', 0)}/{backtest.get('total_trades', 0)})</div>
+                {f'<div>平均单次: {backtest["avg_return"]:.2f}%</div>' if 'avg_return' in backtest else ''}
+            </div>
+        </td>
+    </tr>"""
     
-    # 完整HTML
+    # 风险提示
+    risk_html = """
+    <tr>
+        <td style="padding:15px;background:#ffebee;border-left:4px solid #f44336;">
+            <div style="font-size:14px;font-weight:bold;color:#c62828;margin-bottom:8px;">⚠️ 风险提示</div>
+            <div style="font-size:12px;color:#666;line-height:1.6;">
+                • 以上建议基于技术分析，不构成投资建议<br>
+                • 请根据自身风险承受能力决策<br>
+                • 建议设置止损，控制单笔亏损在3-5%
+            </div>
+        </td>
+    </tr>"""
+    
+    # 完整HTML - 使用表格布局，适配手机
     html = f"""<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold & Oil Investment Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>黄金/原油市场推送</title>
 </head>
-<body style="margin:0;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:#f5f5f5;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:650px;margin:0 auto;background:white;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+<body style="margin:0;padding:10px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:#f0f0f0;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:100%;margin:0 auto;background:white;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+        <!-- 标题 -->
         <tr>
-            <td style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:30px;text-align:center;border-radius:10px 10px 0 0;">
-                <h1 style="margin:0;color:white;font-size:22px;">黄金/原油市场推送</h1>
-                <p style="margin:10px 0 0 0;color:white;opacity:0.9;font-size:14px;">{beijing_time.strftime('%Y-%m-%d %H:%M')} (北京时间)</p>
+            <td style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:20px 15px;text-align:center;">
+                <div style="font-size:20px;font-weight:bold;color:white;">黄金/原油市场推送</div>
+                <div style="font-size:13px;color:white;opacity:0.9;margin-top:5px;">{beijing_time.strftime('%Y-%m-%d %H:%M')} (北京时间)</div>
             </td>
         </tr>
+        
+        <!-- 价格数据 -->
+        {prices_html}
+        
+        <!-- 投资建议 -->
+        {advice_html}
+        
+        <!-- 资产配置 -->
+        {allocation_html}
+        
+        <!-- 回测结果 -->
+        {backtest_html}
+        
+        <!-- 风险提示 -->
+        {risk_html}
+        
+        <!-- 底部 -->
         <tr>
-            <td style="padding:25px;">
-                <h2 style="margin:0 0 15px 0;color:#333;font-size:18px;border-left:4px solid #FFD700;padding-left:10px;">🥇 黄金价格</h2>
-                {market_html}
-                
-                {advice_html}
-                {allocation_html}
-                {backtest_html}
-                
-                <div style="background:#ffebee;padding:15px;border-radius:8px;margin-top:15px;border-left:4px solid #f44336;">
-                    <h3 style="margin:0 0 10px 0;color:#c62828;font-size:14px;">⚠️ 风险提示</h3>
-                    <ul style="margin:0;padding-left:18px;font-size:12px;color:#666;">
-                        <li>以上建议基于技术分析，不构成投资建议</li>
-                        <li>请根据自身风险承受能力决策</li>
-                        <li>建议设置止损，控制单笔亏损在3-5%</li>
-                    </ul>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <td style="background:#f8f9fa;padding:20px;text-align:center;border-radius:0 0 10px 10px;">
-                <p style="margin:0;color:#28a745;font-size:16px;font-weight:bold;">✅ 推送完成</p>
-                <p style="margin:10px 0 0 0;color:#666;font-size:12px;">趋势图请查看邮件附件</p>
-                <p style="margin:5px 0 0 0;font-size:12px;"><a href="https://github.com/tomjingang/gold-etf-monitor" style="color:#667eea;text-decoration:none;">查看仓库</a></p>
+            <td style="padding:15px;text-align:center;background:#f8f9fa;">
+                <div style="font-size:14px;color:#28a745;font-weight:bold;">✅ 推送完成</div>
+                <div style="font-size:12px;color:#666;margin-top:8px;">趋势图请查看附件</div>
             </td>
         </tr>
     </table>
