@@ -510,10 +510,10 @@ def generate_email_html(gold_data, oil_data, advice, backtest):
     # 构建价格数据HTML - 使用简单表格
     prices_html = ""
     
-    # 纽约金
+    # 纽约金 - 中国股市习惯：涨红跌绿
     if gold_data['ny_gold']:
         ny = gold_data['ny_gold']
-        color = '#28a745' if ny['change'] >= 0 else '#dc3545'
+        color = '#dc3545' if ny['change'] >= 0 else '#28a745'  # 涨红跌绿
         arrow = '▲' if ny['change'] >= 0 else '▼'
         prices_html += f"""
         <tr>
@@ -528,10 +528,10 @@ def generate_email_html(gold_data, oil_data, advice, backtest):
             </td>
         </tr>"""
     
-    # 伦敦金/GLD
-    if gold_data['london_gold']:
+    # 伦敦金/GLD - 中国股市习惯：涨红跌绿
+    if gold_data['london_gold'] and gold_data['london_gold']['price'] != 0:
         lg = gold_data['london_gold']
-        color = '#28a745' if lg['change'] >= 0 else '#dc3545'
+        color = '#dc3545' if lg['change'] >= 0 else '#28a745'  # 涨红跌绿
         arrow = '▲' if lg['change'] >= 0 else '▼'
         prices_html += f"""
         <tr>
@@ -543,7 +543,7 @@ def generate_email_html(gold_data, oil_data, advice, backtest):
             </td>
         </tr>"""
     
-    # 中国黄金ETF
+    # 中国黄金ETF - 中国股市习惯：涨红跌绿
     if gold_data['china_etf']:
         prices_html += """
         <tr>
@@ -551,7 +551,7 @@ def generate_email_html(gold_data, oil_data, advice, backtest):
                 <div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:8px;">📈 中国黄金ETF</div>
                 <table width="100%" cellpadding="0" cellspacing="0">"""
         for etf in gold_data['china_etf']:
-            color = '#28a745' if etf['change'] >= 0 else '#dc3545'
+            color = '#dc3545' if etf['change'] >= 0 else '#28a745'  # 涨红跌绿
             arrow = '▲' if etf['change'] >= 0 else '▼'
             prices_html += f"""
                     <tr>
@@ -568,10 +568,10 @@ def generate_email_html(gold_data, oil_data, advice, backtest):
             </td>
         </tr>"""
     
-    # WTI原油
+    # WTI原油 - 中国股市习惯：涨红跌绿
     if oil_data['wti']:
         wti = oil_data['wti']
-        color = '#28a745' if wti['change'] >= 0 else '#dc3545'
+        color = '#dc3545' if wti['change'] >= 0 else '#28a745'  # 涨红跌绿
         arrow = '▲' if wti['change'] >= 0 else '▼'
         prices_html += f"""
         <tr>
@@ -586,10 +586,10 @@ def generate_email_html(gold_data, oil_data, advice, backtest):
             </td>
         </tr>"""
     
-    # 布伦特原油
+    # 布伦特原油 - 中国股市习惯：涨红跌绿
     if oil_data['brent']:
         brent = oil_data['brent']
-        color = '#28a745' if brent['change'] >= 0 else '#dc3545'
+        color = '#dc3545' if brent['change'] >= 0 else '#28a745'  # 涨红跌绿
         arrow = '▲' if brent['change'] >= 0 else '▼'
         prices_html += f"""
         <tr>
@@ -611,13 +611,13 @@ def generate_email_html(gold_data, oil_data, advice, backtest):
     
     # 黄金建议
     gold_reasons = '; '.join(gold.get('reasons', ['趋势不明确']))
-    gold_target = f"<div style='font-size:13px;color:#28a745;margin-top:5px;'>目标: ${gold['target']:.2f}</div>" if gold.get('target') else ""
-    gold_stop = f"<div style='font-size:13px;color:#dc3545;margin-top:3px;'>止损: ${gold['stop_loss']:.2f}</div>" if gold.get('stop_loss') else ""
+    gold_target = f"<div style='font-size:13px;color:#dc3545;margin-top:5px;'>目标: ${gold['target']:.2f}</div>" if gold.get('target') else ""
+    gold_stop = f"<div style='font-size:13px;color:#28a745;margin-top:3px;'>止损: ${gold['stop_loss']:.2f}</div>" if gold.get('stop_loss') else ""
     
     # 原油建议
     oil_reasons = '; '.join(oil.get('reasons', ['趋势不明确']))
-    oil_target = f"<div style='font-size:13px;color:#28a745;margin-top:5px;'>目标: ${oil['target']:.2f}</div>" if oil.get('target') else ""
-    oil_stop = f"<div style='font-size:13px;color:#dc3545;margin-top:3px;'>止损: ${oil['stop_loss']:.2f}</div>" if oil.get('stop_loss') else ""
+    oil_target = f"<div style='font-size:13px;color:#dc3545;margin-top:5px;'>目标: ${oil['target']:.2f}</div>" if oil.get('target') else ""
+    oil_stop = f"<div style='font-size:13px;color:#28a745;margin-top:3px;'>止损: ${oil['stop_loss']:.2f}</div>" if oil.get('stop_loss') else ""
     
     advice_html = f"""
     <tr>
@@ -676,15 +676,16 @@ def generate_email_html(gold_data, oil_data, advice, backtest):
         </td>
     </tr>"""
     
-    # 回测结果
+    # 回测结果 - 收益用红色显示（中国股市习惯：红=涨/盈利）
     backtest_html = ""
     if backtest:
+        return_color = '#dc3545' if backtest.get('gold_return', 0) >= 0 else '#28a745'
         backtest_html = f"""
     <tr>
         <td style="padding:15px;background:#e8f5e9;">
             <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:10px;">📈 策略回测 (近30天)</div>
             <div style="font-size:14px;color:#333;line-height:1.8;">
-                <div>累计收益: <strong style="color:#28a745;">{backtest.get('gold_return', 0):.2f}%</strong></div>
+                <div>累计收益: <strong style="color:{return_color};">{backtest.get('gold_return', 0):.2f}%</strong></div>
                 <div>胜率: <strong>{backtest.get('win_rate', 0):.1f}%</strong> ({backtest.get('profitable_trades', 0)}/{backtest.get('total_trades', 0)})</div>
                 {f'<div>平均单次: {backtest["avg_return"]:.2f}%</div>' if 'avg_return' in backtest else ''}
             </div>
