@@ -136,16 +136,18 @@ def get_gold_data():
     if london_data is not None and len(london_data) > 1:
         latest = london_data.iloc[-1]
         prev = london_data.iloc[-2]
-        results['london_gold'] = {
-            'name': 'SPDR黄金ETF(参考伦敦金)',
-            'price': latest['Close'],
-            'change': latest['Close'] - prev['Close'],
-            'change_pct': (latest['Close'] - prev['Close']) / prev['Close'] * 100,
-            'ma20': latest['MA20'],
-            'rsi': latest['RSI'],
-            'volatility': latest['Volatility'],
-            'history': london_data
-        }
+        # 检查数据是否有效（非NaN）
+        if pd.notna(latest['Close']) and pd.notna(prev['Close']) and prev['Close'] != 0:
+            results['london_gold'] = {
+                'name': 'SPDR黄金ETF(参考伦敦金)',
+                'price': latest['Close'],
+                'change': latest['Close'] - prev['Close'],
+                'change_pct': (latest['Close'] - prev['Close']) / prev['Close'] * 100,
+                'ma20': latest['MA20'] if pd.notna(latest['MA20']) else 0,
+                'rsi': latest['RSI'] if pd.notna(latest['RSI']) else 0,
+                'volatility': latest['Volatility'] if pd.notna(latest['Volatility']) else 0,
+                'history': london_data
+            }
     
     # 中国黄金ETF
     for code, name in CHINA_GOLD_ETF.items():
@@ -424,10 +426,10 @@ def generate_push_content(gold_data, oil_data, advice, backtest):
         emoji = "📈" if ny['change'] >= 0 else "📉"
         lines.append(f"{emoji} 纽约金期货: ${ny['price']:.2f} ({ny['change_pct']:+.2f}%)")
         lines.append(f"   RSI: {ny['rsi']:.1f} | MA20: ${ny['ma20']:.2f} | 波动率: {ny['volatility']:.2f}%")
-    if gold_data['london_gold']:
+    if gold_data['london_gold'] and gold_data['london_gold']['price'] != 0:
         lg = gold_data['london_gold']
         emoji = "📈" if lg['change'] >= 0 else "📉"
-        lines.append(f"{emoji} 伦敦金: ${lg['price']:.2f} ({lg['change_pct']:+.2f}%)")
+        lines.append(f"{emoji} {lg['name']}: ${lg['price']:.2f} ({lg['change_pct']:+.2f}%)")
     
     # 中国黄金ETF
     lines.append("")
