@@ -131,13 +131,13 @@ def get_gold_data():
             'history': ny_data
         }
     
-    # 伦敦金
-    london_data = fetch_data('XAUUSD=X', period='60d')
+    # 伦敦金 (使用GLD黄金ETF作为参考)
+    london_data = fetch_data('GLD', period='60d')
     if london_data is not None and len(london_data) > 1:
         latest = london_data.iloc[-1]
         prev = london_data.iloc[-2]
         results['london_gold'] = {
-            'name': '伦敦金',
+            'name': 'SPDR黄金ETF(参考伦敦金)',
             'price': latest['Close'],
             'change': latest['Close'] - prev['Close'],
             'change_pct': (latest['Close'] - prev['Close']) / prev['Close'] * 100,
