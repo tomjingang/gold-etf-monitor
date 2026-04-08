@@ -26,7 +26,7 @@ import time
 # 黄金相关
 GOLD_SYMBOLS = {
     'GC=F': {'name': '纽约金期货', 'type': 'futures', 'currency': 'USD'},
-    'XAUUSD=X': {'name': '伦敦金/美元', 'type': 'spot', 'currency': 'USD'},
+    'GLD': {'name': 'SPDR黄金ETF(参考伦敦金)', 'type': 'etf', 'currency': 'USD'},
 }
 
 # 中国黄金ETF
@@ -187,6 +187,7 @@ def get_oil_data():
             'ma60': latest['MA60'],
             'rsi': latest['RSI'],
             'macd': latest['MACD'],
+            'macd_signal': latest['MACD_Signal'],
             'volatility': latest['Volatility'],
             'history': wti_data
         }
