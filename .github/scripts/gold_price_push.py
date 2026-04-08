@@ -131,15 +131,15 @@ def get_gold_data():
             'history': ny_data
         }
     
-    # 伦敦金 (使用GLD黄金ETF作为参考)
-    london_data = fetch_data('GLD', period='60d')
+    # 伦敦金 (使用IAU黄金ETF作为参考，比GLD更稳定)
+    london_data = fetch_data('IAU', period='60d')
     if london_data is not None and len(london_data) > 1:
         latest = london_data.iloc[-1]
         prev = london_data.iloc[-2]
         # 检查数据是否有效（非NaN）
         if pd.notna(latest['Close']) and pd.notna(prev['Close']) and prev['Close'] != 0:
             results['london_gold'] = {
-                'name': 'SPDR黄金ETF(参考伦敦金)',
+                'name': 'iShares黄金ETF(参考伦敦金)',
                 'price': latest['Close'],
                 'change': latest['Close'] - prev['Close'],
                 'change_pct': (latest['Close'] - prev['Close']) / prev['Close'] * 100,
@@ -148,6 +148,24 @@ def get_gold_data():
                 'volatility': latest['Volatility'] if pd.notna(latest['Volatility']) else 0,
                 'history': london_data
             }
+    
+    # 如果IAU获取失败，尝试用GLD
+    if results['london_gold'] is None:
+        london_data = fetch_data('GLD', period='60d')
+        if london_data is not None and len(london_data) > 1:
+            latest = london_data.iloc[-1]
+            prev = london_data.iloc[-2]
+            if pd.notna(latest['Close']) and pd.notna(prev['Close']) and prev['Close'] != 0:
+                results['london_gold'] = {
+                    'name': 'SPDR黄金ETF(参考伦敦金)',
+                    'price': latest['Close'],
+                    'change': latest['Close'] - prev['Close'],
+                    'change_pct': (latest['Close'] - prev['Close']) / prev['Close'] * 100,
+                    'ma20': latest['MA20'] if pd.notna(latest['MA20']) else 0,
+                    'rsi': latest['RSI'] if pd.notna(latest['RSI']) else 0,
+                    'volatility': latest['Volatility'] if pd.notna(latest['Volatility']) else 0,
+                    'history': london_data
+                }
     
     # 中国黄金ETF
     for code, name in CHINA_GOLD_ETF.items():
